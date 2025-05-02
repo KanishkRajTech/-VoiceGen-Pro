@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoiceGen | Professional Text-to-Speech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f0f4ff',
+              100: '#e0e9ff',
+              200: '#c7d7fe',
+              300: '#a5b8fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            },
+            secondary: {
+              500: '#ec4899',
+              600: '#db2777',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    .word-highlight {
+      background-color: rgba(99, 102, 241, 0.2);
+      padding: 0.1rem 0.2rem;
+      border-radius: 0.25rem;
+      transition: all 0.2s;
+    }
+    
+    .status-dot {
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 9999px;
+      background-color: #9ca3af;
+    }
+    
+    .status-dot.active {
+      background-color: #10b981;
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    
+    #file-upload-btn:hover {
+      background-color: #f0f4ff;
+      border-style: solid;
+    }
+  </style>
+</head>
+<body class="font-sans bg-gray-50 min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary-600 to-primary-800 text-white rounded-xl shadow-md p-6 mb-8">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-microphone-alt text-2xl"></i>
+          <h1 class="text-2xl font-bold">VoiceGen Pro</h1>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="status-dot"></div>
+          <span class="text-sm font-medium">Ready</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="bg-white rounded-xl shadow-md overflow-hidden">
+      <!-- Text Input Section -->
+      <div class="p-6 border-b border-gray-200">
+        <div class="relative">
+          <label for="text-input" class="block text-sm font-medium text-gray-700 mb-2">Enter your text</label>
+          <textarea 
+            id="text-input" 
+            class="w-full min-h-[200px] p-4 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all resize-y"
+            placeholder="Type or paste your text here..."></textarea>
+          <div class="absolute bottom-3 right-3 bg-gray-800 text-white text-xs px-2 py-1 rounded-lg">
+            <span id="char-count">0</span> characters
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+        <!-- Voice Settings -->
+        <div class="bg-gray-50 p-5 rounded-lg">
+          <h2 class="flex items-center gap-2 text-lg font-semibold text-primary-700 mb-4">
+            <i class="fas fa-sliders-h"></i>
+            Voice Settings
+          </h2>
+          
+          <div class="space-y-4">
+            <!-- Voice Selection -->
+            <div>
+              <label for="voice-select" class="block text-sm font-medium text-gray-700 mb-1">Select Voice</label>
+              <select id="voice-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                <option value="">Default Voice</option>
+              </select>
+            </div>
+            
+            <!-- Speed Control -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label for="rate" class="block text-sm font-medium text-gray-700">
+                  <i class="fas fa-tachometer-alt mr-1"></i>
+                  Speed
+                </label>
+                <span id="rate-value" class="text-sm font-medium text-primary-600">1.0x</span>
+              </div>
+              <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1" 
+                     class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600">
+            </div>
+            
+            <!-- Pitch Control -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label for="pitch" class="block text-sm font-medium text-gray-700">
+                  <i class="fas fa-wave-square mr-1"></i>
+                  Pitch
+                </label>
+                <span id="pitch-value" class="text-sm font-medium text-primary-600">1.0</span>
+              </div>
+              <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1" 
+                     class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600">
+            </div>
+            
+            <!-- Volume Control -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label for="volume" class="block text-sm font-medium text-gray-700">
+                  <i class="fas fa-volume-up mr-1"></i>
+                  Volume
+                </label>
+                <span id="volume-value" class="text-sm font-medium text-primary-600">1.0</span>
+              </div>
+              <input type="range" id="volume" min="0" max="1" step="0.1" value="1" 
+                     class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600">
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="bg-gray-50 p-5 rounded-lg">
+          <h2 class="flex items-center gap-2 text-lg font-semibold text-primary-700 mb-4">
+            <i class="fas fa-play-circle"></i>
+            Controls
+          </h2>
+          
+          <div class="space-y-4">
+            <!-- Control Buttons -->
+            <div class="grid grid-cols-2 gap-3">
+              <button id="speak-btn" class="bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors">
+                <i class="fas fa-play"></i>
+                Speak
+              </button>
+              <button id="pause-btn" disabled class="bg-gray-300 text-gray-600 py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors">
+                <i class="fas fa-pause"></i>
+                Pause
+              </button>
+              <button id="resume-btn" disabled class="bg-yellow-500 hover:bg-yellow-600 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors">
+                <i class="fas fa-redo"></i>
+                Resume
+              </button>
+              <button id="stop-btn" disabled class="bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors">
+                <i class="fas fa-stop"></i>
+                Stop
+              </button>
+            </div>
+            
+            <!-- File Upload -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Import Text</label>
+              <label id="file-upload-btn" class="inline-block w-full p-3 border-2 border-dashed border-primary-500 rounded-lg cursor-pointer text-center text-primary-600 font-medium hover:text-primary-700 transition-colors">
+                <i class="fas fa-file-upload mr-2"></i>
+                Choose File
+                <input type="file" id="file-input" accept=".txt,.pdf,.docx" class="hidden">
+              </label>
+              <div id="file-name" class="text-sm text-gray-500 mt-1">No file selected</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Feedback Section -->
+      <div class="bg-gray-50 p-5 border-t border-gray-200">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-primary-700 mb-3">
+          <i class="fas fa-eye"></i>
+          Visual Feedback
+        </h2>
+        <div id="highlighted-text" class="bg-white p-4 rounded-lg min-h-16 border border-gray-200 overflow-auto max-h-40">
+          <p class="text-gray-500">Text will be highlighted as it's spoken...</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-8 text-center text-gray-500 text-sm">
+      <p>© 2023 VoiceGen Pro. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script>
+    // DOM Elements
+    const textInput = document.getElementById('text-input');
+    const charCount = document.getElementById('char-count');
+    const speakBtn = document.getElementById('speak-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const resumeBtn = document.getElementById('resume-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const voiceSelect = document.getElementById('voice-select');
+    const rateSlider = document.getElementById('rate');
+    const pitchSlider = document.getElementById('pitch');
+    const volumeSlider = document.getElementById('volume');
+    const rateValue = document.getElementById('rate-value');
+    const pitchValue = document.getElementById('pitch-value');
+    const volumeValue = document.getElementById('volume-value');
+    const statusDot = document.querySelector('.status-dot');
+    const statusText = document.querySelector('.status-dot + span');
+    const fileInput = document.getElementById('file-input');
+    const fileName = document.getElementById('file-name');
+    const highlightedText = document.getElementById('highlighted-text');
+    const fileUploadBtn = document.getElementById('file-upload-btn');
+
+    // App state
+    let voices = [];
+    let utterance = null;
+    let isSpeaking = false;
+    let isPaused = false;
+    let currentWordIndex = 0;
+    let words = [];
+    
+    // Initialize the app
+    function init() {
+      loadVoices();
+      setupEventListeners();
+      updateCharCount();
+      
+      // Check for speech synthesis support
+      if (!window.speechSynthesis) {
+        alert("Your browser doesn't support the Speech Synthesis API. Please try Chrome, Edge or Safari.");
+      }
+    }
+    
+    // Load available voices
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
+      voiceSelect.innerHTML = '<option value="">Default Voice</option>';
+      
+      voices.forEach(voice => {
+        const option = document.createElement('option');
+        option.value = voice.name;
+        option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' — DEFAULT' : ''}`;
+        voiceSelect.appendChild(option);
+      });
+    }
+    
+    // Set up event listeners
+    function setupEventListeners() {
+      // Text input events
+      textInput.addEventListener('input', updateCharCount);
+      
+      // Button events
+      speakBtn.addEventListener('click', speakText);
+      pauseBtn.addEventListener('click', pauseSpeech);
+      resumeBtn.addEventListener('click', resumeSpeech);
+      stopBtn.addEventListener('click', stopSpeech);
+      
+      // Slider events
+      rateSlider.addEventListener('input', updateRate);
+      pitchSlider.addEventListener('input', updatePitch);
+      volumeSlider.addEventListener('input', updateVolume);
+      
+      // Voice selection
+      voiceSelect.addEventListener('change', updateVoice);
+      
+      // File upload
+      fileInput.addEventListener('change', handleFileUpload);
+      
+      // Speech synthesis events
+      speechSynthesis.onvoiceschanged = loadVoices;
+      
+      // Handle when speech ends
+      window.speechSynthesis.onend = () => {
+        isSpeaking = false;
+        isPaused = false;
+        updateUIState();
+        resetHighlighting();
+      };
+    }
+    
+    // Update character count
+    function updateCharCount() {
+      const count = textInput.value.length;
+      charCount.textContent = count;
+    }
+    
+    // Speak the text
+    function speakText() {
+      if (isSpeaking && !isPaused) return;
+      
+      const text = textInput.value.trim();
+      if (!text) {
+        alert('Please enter some text first!');
+        return;
+      }
+      
+      // Cancel any ongoing speech
+      if (utterance) {
+        speechSynthesis.cancel();
+      }
+      
+      // Create new utterance
+      utterance = new SpeechSynthesisUtterance(text);
+      
+      // Set voice if selected
+      const selectedVoice = voices.find(voice => voice.name === voiceSelect.value);
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+      
+      // Set speech parameters
+      utterance.rate = parseFloat(rateSlider.value);
+      utterance.pitch = parseFloat(pitchSlider.value);
+      utterance.volume = parseFloat(volumeSlider.value);
+      
+      // Prepare word highlighting
+      prepareHighlighting(text);
+      
+      // Event for word highlighting
+      utterance.onboundary = (event) => {
+        if (event.name === 'word') {
+          highlightCurrentWord(event.charIndex);
+        }
+      };
+      
+      // Start speaking
+      speechSynthesis.speak(utterance);
+      isSpeaking = true;
+      isPaused = false;
+      updateUIState();
+    }
+    
+    // Pause speech
+    function pauseSpeech() {
+      if (isSpeaking && !isPaused) {
+        speechSynthesis.pause();
+        isPaused = true;
+        updateUIState();
+      }
+    }
+    
+    // Resume speech
+    function resumeSpeech() {
+      if (isSpeaking && isPaused) {
+        speechSynthesis.resume();
+        isPaused = false;
+        updateUIState();
+      }
+    }
+    
+    // Stop speech
+    function stopSpeech() {
+      if (isSpeaking) {
+        speechSynthesis.cancel();
+        isSpeaking = false;
+        isPaused = false;
+        updateUIState();
+        resetHighlighting();
+      }
+    }
+    
+    // Update UI state based on speech status
+    function updateUIState() {
+      // Update buttons
+      speakBtn.disabled = isSpeaking && !isPaused;
+      pauseBtn.disabled = !isSpeaking || isPaused;
+      resumeBtn.disabled = !isSpeaking || !isPaused;
+      stopBtn.disabled = !isSpeaking;
+      
+      // Update button styles
+      if (speakBtn.disabled) {
+        speakBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
+        speakBtn.classList.add('bg-gray-300', 'text-gray-600', 'cursor-not-allowed');
+      } else {
+        speakBtn.classList.add('bg-primary-600', 'hover:bg-primary-700', 'text-white');
+        speakBtn.classList.remove('bg-gray-300', 'text-gray-600', 'cursor-not-allowed');
+      }
+      
+      // Update status indicator
+      if (isSpeaking) {
+        statusDot.classList.add('active');
+        statusText.textContent = isPaused ? 'Paused' : 'Speaking...';
+      } else {
+        statusDot.classList.remove('active');
+        statusText.textContent = 'Ready';
+      }
+    }
+    
+    // Update rate value display
+    function updateRate() {
+      const value = rateSlider.value;
+      rateValue.textContent = `${value}x`;
+      if (utterance) utterance.rate = parseFloat(value);
+    }
+    
+    // Update pitch value display
+    function updatePitch() {
+      const value = pitchSlider.value;
+      pitchValue.textContent = value;
+      if (utterance) utterance.pitch = parseFloat(value);
+    }
+    
+    // Update volume value display
+    function updateVolume() {
+      const value = volumeSlider.value;
+      volumeValue.textContent = value;
+      if (utterance) utterance.volume = parseFloat(value);
+    }
+    
+    // Update voice selection
+    function updateVoice() {
+      if (utterance && isSpeaking) {
+        const selectedVoice = voices.find(voice => voice.name === voiceSelect.value);
+        if (selectedVoice) {
+          // Need to stop and restart to change voice
+          const wasPaused = isPaused;
+          const currentTime = speechSynthesis.paused ? speechSynthesis.resume() : speechSynthesis.pause();
+          
+          utterance.voice = selectedVoice;
+          
+          speechSynthesis.cancel();
+          speechSynthesis.speak(utterance);
+          
+          if (wasPaused) {
+            speechSynthesis.pause();
+          }
+        }
+      }
+    }
+    
+    // Handle file upload
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      fileName.textContent = file.name;
+      
+      // Simple text file handling (for demo)
+      if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          textInput.value = e.target.result;
+          updateCharCount();
+        };
+        reader.readAsText(file);
+      } else {
+        alert('Please upload a plain text (.txt) file for this demo. Other formats not supported in this example.');
+      }
+    }
+    
+    // Prepare text for word highlighting
+    function prepareHighlighting(text) {
+      words = text.split(/\s+/);
+      currentWordIndex = 0;
+      
+      // Create HTML for visual feedback
+      highlightedText.innerHTML = words.map(word => 
+        `<span class="word">${word}</span>`
+      ).join(' ');
+    }
+    
+    // Highlight the current word being spoken
+    function highlightCurrentWord(charIndex) {
+      // Simple approach - could be enhanced for better accuracy
+      const textSoFar = textInput.value.substring(0, charIndex);
+      const wordsSoFar = textSoFar.split(/\s+/).length - 1;
+      
+      if (wordsSoFar >= 0 && wordsSoFar < words.length) {
+        // Remove highlight from previous word
+        const wordElements = highlightedText.querySelectorAll('.word');
+        if (currentWordIndex < wordElements.length) {
+          wordElements[currentWordIndex].classList.remove('word-highlight');
+        }
+        
+        // Highlight new word
+        currentWordIndex = wordsSoFar;
+        if (currentWordIndex < wordElements.length) {
+          wordElements[currentWordIndex].classList.add('word-highlight');
+          
+          // Scroll to keep highlighted word visible
+          wordElements[currentWordIndex].scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      }
+    }
+    
+    // Reset word highlighting
+    function resetHighlighting() {
+      const wordElements = highlightedText.querySelectorAll('.word');
+      wordElements.forEach(el => el.classList.remove('word-highlight'));
+      currentWordIndex = 0;
+    }
+    
+    // Initialize the app when DOM is loaded
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
+
+
