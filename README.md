@@ -27,7 +27,7 @@ VoiceGen Pro is a modern, responsive web application that converts text to speec
 
 ## Live Demo 🌐
 
-[Try VoiceGen Pro Live](https://your-deployment-url.com) <!-- Add your live URL here -->
+[Try VoiceGen Pro Live](https://kanishkrajtech.github.io/-VoiceGen-Pro/) 
 
 ## Installation 💻
 
